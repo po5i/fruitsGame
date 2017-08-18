@@ -1,13 +1,42 @@
 var playing = false;
+var valid = false;
 var score;
 var trialsLeft;
 var step;
 var action;
 var fruits = ['apple', 'banana', 'cherries', 'grapes',
 'mango', 'orange', 'peach', 'pear', 'watermelon'];
+var sessionToken = "";
+var endpoint = "http://localhost:8000";
+
 $(function(){
+
+	var code = prompt("Please enter your code");
+	sessionToken = guid();
+
+	if (code != null) {
+		$.ajax({
+		  method: "POST",
+		  url: endpoint + "/verify_access_code/",
+		  data: {
+		  	access_code: code, 
+		  	session_token: sessionToken 
+		  }
+		}).done(function(data) {
+			if (data.response != "ok") {
+				alert("Error, please try again.")
+				return;
+			}
+		    $("#namevalue").html(data.data.user_name);
+		    $("#coursevalue").html(data.data.course_name);
+			valid = true;
+		}).fail(function(error) {
+			alert("Error, please try again.")
+		});
+	}
+
 	$("#startreset").click(function(){
- 		if(playing == true){
+ 		if(playing == true || valid == false){
  			location.reload();
  		}else{
  			playing = true;
@@ -81,5 +110,32 @@ $(function(){
 	function stopAction(){
  		clearInterval(action);
  		$("#fruit1").hide();
+
+ 		$.ajax({
+		  method: "POST",
+		  url: endpoint + "/store_score/",
+		  data: {
+		  	score: score, 
+		  	session_token: sessionToken 
+		  }
+		}).done(function(data) {
+			if (data.response != "ok") {
+				alert("Error, please try again.")
+				return;
+			}
+		}).fail(function(error) {
+			alert("Error, please try again.")
+			console.log(error);
+		});
+	}
+
+	function guid() {
+	  function s4() {
+	    return Math.floor((1 + Math.random()) * 0x10000)
+	      .toString(16)
+	      .substring(1);
+	  }
+	  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+	    s4() + '-' + s4() + s4() + s4();
 	}
 });
